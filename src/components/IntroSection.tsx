@@ -4,7 +4,7 @@ import { Play } from 'lucide-react';
 const IntroSection = () => {
   return (
     <div className="mt-12 mb-12">
-      <div className="relative aspect-video rounded-2xl overflow-hidden bg-[#1E1E2A] group">
+      <div className="relative aspect-video rounded-2xl overflow-hidden bg-ui-dark group">
         {/* Video Thumbnail */}
         <div className="absolute inset-0">
           <img
@@ -12,20 +12,20 @@ const IntroSection = () => {
             alt="Celflicks Intro"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-cyber-dark/50" />
         </div>
 
         {/* Play Button */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <button className="bg-purple-600 hover:bg-purple-700 p-6 rounded-full transform transition-all duration-300 group-hover:scale-110">
+          <button className="bg-cyber-blue hover:bg-cyber-purple p-6 rounded-full transform transition-all duration-300 group-hover:scale-110">
             <Play size={32} fill="white" />
           </button>
         </div>
 
         {/* Title Overlay */}
         <div className="absolute bottom-8 left-8">
-          <h2 className="text-3xl font-bold mb-2">Welcome to Celflicks</h2>
-          <p className="text-gray-300">Discover the future of creative collaboration</p>
+          <h2 className="text-3xl font-bold mb-2 text-cyber-blue">Welcome to Celflicks</h2>
+          <p className="text-cyber-blue/70">Discover the future of creative collaboration</p>
         </div>
 
         {/* Video Element (Hidden by default) */}

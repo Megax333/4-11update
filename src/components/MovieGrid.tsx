@@ -144,7 +144,7 @@ const MovieGrid = () => {
             </div>
             
             {activePreview === item.id && (
-              <div className={`absolute top-0 w-[400px] bg-[#1E1E2A] rounded-xl overflow-hidden shadow-2xl z-50 transition-all duration-300 transform scale-95 group-hover:scale-100 ${
+              <div className={`absolute top-0 w-[400px] bg-ui-dark rounded-xl overflow-hidden z-50 transition-all duration-300 transform scale-95 group-hover:scale-100 ${
                 previewPosition === 'right' ? 'right-full' : 'left-0'
               }`}>
                 <div className="aspect-video relative">
@@ -198,18 +198,18 @@ const MovieGrid = () => {
 
       {/* Navigation Arrows */}
       <div className="flex items-center justify-between mt-8 mb-6">
-        <h2 className="text-xl font-medium text-purple-400">Featured Creators</h2>
+        <h2 className="text-xl font-medium text-cyber-blue">Featured Creators</h2>
         <div className="flex gap-2">
           <button
             onClick={prevPage}
-            className="p-1.5 bg-black/50 hover:bg-purple-600/80 rounded-full backdrop-blur-sm transition-all transform hover:scale-110 border border-white/10 shadow-lg flex items-center justify-center w-8 h-8 disabled:opacity-50 disabled:hover:scale-100"
+            className="p-1.5 bg-ui-dark hover:bg-cyber-blue rounded-full backdrop-blur-sm transition-all transform hover:scale-110 border border-cyber-blue/20 flex items-center justify-center w-8 h-8 disabled:opacity-50 disabled:hover:scale-100"
             disabled={currentPage === 0}
           >
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={nextPage}
-            className="p-1.5 bg-black/50 hover:bg-purple-600/80 rounded-full backdrop-blur-sm transition-all transform hover:scale-110 border border-white/10 shadow-lg flex items-center justify-center w-8 h-8 disabled:opacity-50 disabled:hover:scale-100"
+            className="p-1.5 bg-ui-dark hover:bg-cyber-blue rounded-full backdrop-blur-sm transition-all transform hover:scale-110 border border-cyber-blue/20 flex items-center justify-center w-8 h-8 disabled:opacity-50 disabled:hover:scale-100"
             disabled={currentPage === totalPages - 1}
           >
             <ChevronRight size={16} />

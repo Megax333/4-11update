@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PayPalButtons } from '@paypal/react-paypal-js';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../context/AuthContext';
+import useAuth from '../../hooks/useAuth';
 import CoinIcon from '../CoinIcon';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CreditCard } from 'lucide-react';
+import StripePaymentContainer from './StripePaymentForm';
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const PaymentPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal'>('stripe'); // Default to Stripe
   const [packageDetails, setPackageDetails] = useState<{
     id: string;
     name: string;
@@ -153,6 +155,30 @@ const PaymentPage = () => {
             </div>
           </div>
           
+          {/* Payment method selection */}
+          <div className="flex mb-6 border border-white/10 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setPaymentMethod('stripe')}
+              className={`flex items-center justify-center gap-2 py-3 flex-1 transition-colors ${paymentMethod === 'stripe' 
+                ? 'bg-[#2A2A3A] text-cyber-blue' 
+                : 'bg-[#1E1E2A] text-gray-400 hover:text-white'}`}
+            >
+              <CreditCard size={18} />
+              <span>Credit Card</span>
+            </button>
+            <button
+              onClick={() => setPaymentMethod('paypal')}
+              className={`flex items-center justify-center gap-2 py-3 flex-1 transition-colors ${paymentMethod === 'paypal' 
+                ? 'bg-[#2A2A3A] text-cyber-blue' 
+                : 'bg-[#1E1E2A] text-gray-400 hover:text-white'}`}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.568 4.64-5.873 4.64h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788l.038-.227.732-4.649.047-.257a.56.56 0 0 1 .554-.48h.348c2.265 0 4.03-.728 4.556-2.83a2.12 2.12 0 0 0 .304-1.265c-.087-.568-.39-1.043-.737-1.426z"/>
+              </svg>
+              <span>PayPal</span>
+            </button>
+          </div>
+          
           {isProcessing ? (
             <div className="flex items-center justify-center p-6">
               <div className="w-8 h-8 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mr-3"></div>
@@ -160,40 +186,73 @@ const PaymentPage = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              <PayPalButtons
-                style={{ 
-                  layout: 'vertical',
-                  color: 'gold', // Using gold for better visibility
-                  shape: 'pill',
-                  label: 'pay',
-                  tagline: false,
-                  height: 45
-                }}
-                fundingSource={undefined}
-                createOrder={(_data, actions) => {
-                  return actions.order.create({
-                    intent: "CAPTURE",
-                    purchase_units: [
-                      {
-                        amount: {
-                          value: packageDetails.price_usd.toString(),
-                          currency_code: 'USD'
+              {paymentMethod === 'stripe' ? (
+                <StripePaymentContainer
+                  selectedPackage={{
+                    id: packageDetails.id,
+                    name: packageDetails.name,
+                    xce_amount: packageDetails.xce_amount,
+                    price: packageDetails.price_usd
+                  }}
+                  onSuccess={() => navigate('/?status=success')}
+                  onCancel={() => setError(null)}
+                />
+              ) : (
+                <PayPalButtons
+                  style={{
+                    layout: 'vertical',
+                    color: 'gold',
+                    shape: 'pill',
+                    label: 'pay',
+                    tagline: false,
+                    height: 45
+                  }}
+                  fundingSource={undefined}
+                  createOrder={(_data, actions) => {
+                    return actions.order.create({
+                      intent: "CAPTURE",
+                      purchase_units: [
+                        {
+                          amount: {
+                            value: packageDetails.price_usd.toString(),
+                            currency_code: 'USD'
+                          },
+                          description: `${packageDetails.xce_amount} XCE Credits for Celflicks`
                         },
-                        description: `${packageDetails.xce_amount} XCE Credits for Celflicks`
-                      },
-                    ],
-                  });
-                }}
-                onApprove={(_data, actions) => {
-                  return actions.order!.capture().then((_details) => {
-                    handlePaymentSuccess(_data.orderID);
-                  });
-                }}
-                onError={(err) => {
-                  console.error('PayPal error:', err);
-                  setError('There was an error processing your payment. Please try again.');
-                }}
-              />
+                      ],
+                    });
+                  }}
+                  onApprove={async (_data, actions) => {
+                    const details = await actions.order!.capture();
+                    const orderId = _data.orderID;
+
+                    try {
+                      const { error } = await supabase.functions.invoke('verify-paypal-payment', {
+                        body: {
+                          order_id: orderId,
+                          user_id: user.id,
+                          package_id: packageDetails.id
+                        }
+                      });
+
+                      if (error) {
+                        console.error('Verification error:', error);
+                        setError('Payment verified but failed to add credits. Please contact support.');
+                        return;
+                      }
+
+                      navigate('/?status=success');
+                    } catch (err) {
+                      console.error('Supabase function error:', err);
+                      setError('An error occurred while verifying the payment.');
+                    }
+                  }}
+                  onError={(err) => {
+                    console.error('PayPal error:', err);
+                    setError('There was an error processing your payment. Please try again.');
+                  }}
+                />
+              )}
               
               {error && (
                 <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg text-sm text-red-400">

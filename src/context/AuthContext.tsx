@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 import { AuthModal } from '../components/auth/AuthModal';
 
 interface AuthContextType {
@@ -10,14 +10,14 @@ interface AuthContextType {
   setShowAuthModal: (show: boolean, mode?: 'login' | 'signup') => void;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   showAuthModal: false,
   setShowAuthModal: () => {}
 });
 
-export const useAuth = () => useContext(AuthContext);
+// useAuth is now imported from '../hooks/useAuth'
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);

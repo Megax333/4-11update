@@ -3,6 +3,7 @@ import { ProfileProvider } from './context/ProfileContext';
 import { AuthProvider } from './context/AuthContext';
 import { AudioRoomProvider } from './context/AudioRoomContext';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
+// Stripe is handled directly within the StripePaymentForm component
 import Navbar from './components/Navbar';
 import ExpandableSidebar from './components/ExpandableSidebar';
 import DiscoverPage from './pages/DiscoverPage';
@@ -20,12 +21,14 @@ import { useEffect } from 'react';
 
 // PayPal configuration options
 const paypalOptions = {
-  clientId: "test", // Replace with your PayPal client ID for production
+  clientId: "ASLheV064vTrn0Y-FIgA3scv7IvmcX5hF0NGHmJEg5_1TE-cuHly4oAKxfgsRkN5GwaDZHa1c1s1LXsO", // PayPal sandbox client ID
   currency: "USD",
   intent: "capture",
   // Disable specific funding sources (Pay Later, Venmo)
   disableFunding: "paylater,venmo"
 };
+
+// Stripe configuration is handled within the StripePaymentForm component
 
 function App() {
   useEffect(() => {
@@ -39,7 +42,7 @@ function App() {
         <AuthProvider>
           <ProfileProvider>
             <AudioRoomProvider>
-              <div className="min-h-screen bg-[#0A0A0F] text-white">
+              <div className="min-h-screen bg-cyber-dark text-cyber-blue">
                 <Navbar />
                 <ExpandableSidebar />
                 <div className="ml-16">

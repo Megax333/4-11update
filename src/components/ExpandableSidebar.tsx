@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Menu, Compass, Users2, Headphones, Users, Bookmark, MessageCircle, UserCircle2, ChevronRight } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useAuth } from '../context/AuthContext';
@@ -24,7 +24,8 @@ const ExpandableSidebar = () => {
   const { showProfile } = useProfileContext();
   const navigate = useNavigate();
   const location = useLocation();
-  const { unreadCount } = useMessageStore();
+  const { getTotalUnreadCount } = useMessageStore();
+  const unreadCount = getTotalUnreadCount();
 
   const handleMouseEnter = () => {
     if (!isLocked) {
@@ -70,16 +71,16 @@ const ExpandableSidebar = () => {
       <button
         onClick={handleToggleClick}
         className={cn(
-          "fixed left-0 top-0 z-50 w-16 h-16 bg-[#12121A] flex items-center justify-center",
-          "hover:bg-[#1E1E2A] transition-colors group",
-          isLocked && "bg-[#1E1E2A]"
+          "fixed left-0 top-0 z-50 w-16 h-16 bg-cyber-dark flex items-center justify-center",
+          "hover:bg-ui-dark transition-colors group",
+          isLocked && "bg-ui-dark"
         )}
       >
         <Menu 
           size={24} 
           className={cn(
             "transition-colors",
-            isLocked ? "text-white" : "text-gray-400 group-hover:text-white"
+            isLocked ? "text-cyber-blue" : "text-cyber-blue/50 group-hover:text-cyber-blue"
           )} 
         />
       </button>
@@ -89,7 +90,7 @@ const ExpandableSidebar = () => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={cn(
-          "fixed left-0 top-0 h-full bg-[#12121A] flex flex-col pt-20 z-40",
+          "fixed left-0 top-0 h-full bg-cyber-dark flex flex-col pt-20 z-40 border-r border-cyber-blue/30",
           "transition-all duration-300 ease-in-out",
           isExpanded ? "w-64" : "w-16"
         )}
@@ -100,8 +101,8 @@ const ExpandableSidebar = () => {
             onClick={() => navigate(item.path)}
             className={cn(
               "flex items-center gap-4 py-4 px-6 transition-all duration-200",
-              "hover:bg-[#1E1E2A]",
-              getActiveTab() === item.id ? "text-white bg-purple-600" : "text-gray-500 hover:text-gray-200",
+              "hover:bg-ui-dark hover:shadow-neon-blue",
+              getActiveTab() === item.id ? "text-cyber-black bg-cyber-blue shadow-neon-blue" : "text-cyber-blue/50 hover:text-cyber-blue",
               !isExpanded && "justify-center"
             )}
           >
@@ -119,7 +120,7 @@ const ExpandableSidebar = () => {
             >
               {item.label}
               {item.id === 'messages' && unreadCount > 0 && (
-                <span className="ml-2 text-xs bg-red-500 px-1.5 py-0.5 rounded-full">
+                <span className="ml-2 text-xs bg-cyber-pink px-1.5 py-0.5 rounded-full shadow-neon-purple">
                   {unreadCount}
                 </span>
               )}
@@ -130,7 +131,7 @@ const ExpandableSidebar = () => {
         {/* User Profile */}
         {user && (
           <div className={cn(
-            "hover:bg-[#1E1E2A] transition-all duration-200 mt-auto",
+            "hover:bg-ui-dark hover:shadow-neon-purple transition-all duration-200 mt-auto",
             isExpanded ? "px-6 py-4" : "p-4"
           )}>
             <div className={cn(
@@ -138,12 +139,12 @@ const ExpandableSidebar = () => {
               !isExpanded && "justify-center"
             )}>
               {loading ? (
-                <div className="w-10 h-10 rounded-full bg-purple-600/20 animate-pulse" />
+                <div className="w-10 h-10 rounded-full bg-cyber-purple/20 animate-pulse shadow-neon-purple" />
               ) : (
                 <img
                   src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.username || 'User'}`}
                   alt={profile?.username || 'User avatar'}
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-500/30"
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-cyber-purple/50 shadow-neon-purple"
                 />
               )}
               {isExpanded ? (
@@ -152,16 +153,15 @@ const ExpandableSidebar = () => {
                     <span className="font-medium text-sm">{profile?.username || 'User'}</span>
                     <button
                       onClick={handleViewProfile}
-                      className="flex items-center gap-1.5 ml-auto px-2 py-0.5 rounded-md bg-[#2A2A3A] hover:bg-[#3A3A4A] text-gray-500 hover:text-gray-200 text-sm transition-colors group"
+                      className="flex items-center gap-1.5 ml-auto px-2 py-0.5 rounded-md bg-ui-light hover:bg-ui-highlight text-cyber-blue/70 hover:text-cyber-blue text-sm transition-colors group hover:shadow-neon-purple"
                     >
-                      <UserCircle2 size={16} className="text-gray-500 group-hover:text-purple-400 transition-colors" />
+                      <UserCircle2 size={16} className="text-cyber-blue/50 group-hover:text-cyber-purple transition-colors" />
                       Profile
-                      <ChevronRight size={14} className="text-gray-500 group-hover:text-gray-200 transition-colors" />
+                      <ChevronRight size={14} className="text-cyber-blue/50 group-hover:text-cyber-blue transition-colors" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-500 pl-0.5">
-                    {currentTier?.icon}
-                    <span className="text-xs">{currentTier?.name || 'Bronze'} • {userXP} XP</span>
+                  <div className="flex items-center gap-2 text-cyber-blue/70 pl-0.5">
+                    <span className="text-xs bg-gradient-to-r from-cyber-blue to-cyber-purple bg-clip-text text-transparent">{currentTier?.name || 'Bronze'} • {userXP} XP</span>
                   </div>
                 </div>
               ) : null}

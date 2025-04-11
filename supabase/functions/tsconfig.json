@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "lib": ["esnext", "dom"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "types": ["@types/node"],
+    "paths": {
+      "http/server": ["./node_modules/@types/node/http.d.ts"],
+      "@supabase/supabase-js": ["./node_modules/@supabase/supabase-js/dist/index.d.ts"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

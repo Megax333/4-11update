@@ -17,7 +17,7 @@ const Navbar = () => {
   const { balance, loading } = useBalance();
 
   return (
-    <nav className="fixed top-0 left-16 right-0 h-16 bg-[#12121A]/80 backdrop-blur-md z-40 px-6 flex items-center justify-between">
+    <nav className="fixed top-0 left-16 right-0 h-16 bg-cyber-dark z-40 px-6 flex items-center justify-between border-b border-cyber-blue/30">
       <div className="flex-1 flex items-center">
         <Link to="/">
           <img 
@@ -39,15 +39,15 @@ const Navbar = () => {
           <>
             <button 
               onClick={() => setShowWallet(true)}
-              className="flex items-center gap-3 bg-[#1E1E2A]/80 px-4 py-2 rounded-full backdrop-blur-sm border border-white/5 hover:border-purple-500/30 transition-colors group"
+              className="flex items-center gap-3 bg-ui-dark/80 px-4 py-2 rounded-full backdrop-blur-sm border border-cyber-blue/20 hover:border-cyber-purple/50 hover:shadow-neon-purple transition-all duration-300 group"
             >
               <div className="relative">
                 <CoinIcon size={20} />
-                <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-sm group-hover:blur-md transition-all"></div>
+                <div className="absolute inset-0 bg-cyber-purple/30 rounded-full blur-sm group-hover:blur-md transition-all"></div>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-gray-400">Balance</span>
-                <span className="font-medium bg-gradient-to-r from-purple-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                <span className="text-xs text-cyber-blue/70">Balance</span>
+                <span className="font-medium bg-glow-gradient bg-clip-text text-transparent">
                   {loading ? (
                     <div className="h-4 w-16 bg-purple-600/20 animate-pulse rounded" />
                   ) : (
@@ -67,9 +67,9 @@ const Navbar = () => {
               }}
               className="relative group"
             >
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full blur opacity-60 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
-              <div className="relative px-6 py-2 bg-[#1E1E2A] rounded-full leading-none flex items-center">
-                <span className="text-gray-200 group-hover:text-white transition duration-200">Sign In</span>
+              <div className="absolute -inset-0.5 bg-glow-gradient rounded-full blur opacity-60 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+              <div className="relative px-6 py-2 bg-ui-dark rounded-full leading-none flex items-center">
+                <span className="text-cyber-blue group-hover:text-glow-blue transition duration-200">Sign In</span>
               </div>
             </button>
             
@@ -79,9 +79,9 @@ const Navbar = () => {
               }}
               className="relative group"
             >
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full opacity-60 group-hover:opacity-100 blur transition duration-1000 group-hover:duration-200"></div>
-              <div className="relative px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full leading-none flex items-center">
-                <span className="font-medium text-white">Sign Up</span>
+              <div className="absolute -inset-0.5 bg-glow-gradient rounded-full opacity-60 group-hover:opacity-100 blur transition duration-1000 group-hover:duration-200"></div>
+              <div className="relative px-6 py-2 bg-glow-gradient rounded-full leading-none flex items-center">
+                <span className="font-medium text-cyber-black">Sign Up</span>
               </div>
             </button>
           </div>

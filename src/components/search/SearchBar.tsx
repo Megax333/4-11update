@@ -22,13 +22,15 @@ const SearchBar = () => {
   return (
     <div ref={searchRef} className="relative z-50">
       <div className="relative transition-all duration-300 w-[520px]">
-        <div 
-          className={`relative transition-all duration-300 ${
-            isFocused 
-              ? 'bg-[#1E1E2A] rounded-t-[28px] border border-purple-500/30 shadow-[0_0_20px_rgba(147,51,234,0.3)]' 
-              : 'bg-[#1E1E2A] rounded-[28px] border border-white/5 hover:border-purple-500/30 shadow-[0_0_10px_rgba(147,51,234,0.1)]'
-          }`}
-        >
+        <div className="relative">
+          <div className="absolute -inset-[1px] bg-gradient-to-r from-cyber-blue to-cyber-purple opacity-70 rounded-[28px] blur-[1px]"></div>
+          <div 
+            className={`relative transition-all duration-300 ${
+              isFocused 
+                ? 'bg-[#1E1E2A] rounded-t-[28px] border-0' 
+                : 'bg-[#1E1E2A] rounded-[28px] border-0'
+            }`}
+          >
           <div className="flex items-center px-5 py-3">
             <div className={`relative w-5 h-5 mr-3 transition-all duration-500 ${isFocused ? 'text-purple-500' : 'text-gray-400'} group`}>
               <div className={`absolute inset-0 rounded-full border-2 border-current transition-all duration-300 ${isFocused ? 'animate-[spin_3s_linear_infinite]' : ''}`} style={{ clipPath: 'polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%)' }} />
@@ -43,6 +45,7 @@ const SearchBar = () => {
               placeholder="Search content, creators, and more..."
               className="w-full bg-transparent text-gray-300 focus:outline-none placeholder:text-gray-500 text-[15px] font-light tracking-wide"
             />
+          </div>
           </div>
         </div>
 

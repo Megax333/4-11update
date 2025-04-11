@@ -9,7 +9,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #0A0A0F;
+  background: #12123D;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -36,7 +36,7 @@
 
 @layer base {
   body {
-    @apply bg-[#0A0A0F] text-white overflow-x-hidden;
+    @apply bg-cyber-dark text-cyber-blue overflow-x-hidden;
     &.admin-panel-open {
       overflow: hidden;
     }

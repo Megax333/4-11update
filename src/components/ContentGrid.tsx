@@ -38,7 +38,7 @@ const ContentGrid = () => {
   return (
     <section className="mt-0">
       <div className="flex items-center gap-4 mb-6">
-        <h2 className="text-xl font-medium text-purple-400 -translate-y-1">Flicks</h2>
+        <h2 className="text-xl font-medium text-cyber-blue -translate-y-1">Flicks</h2>
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {categories.map((category) => (
             <button
@@ -46,8 +46,8 @@ const ContentGrid = () => {
               onClick={() => setActiveCategory(category.id)}
               className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
                 activeCategory === category.id
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-[#1E1E2A] text-gray-300 hover:bg-[#2A2A3A] hover:text-white'
+                  ? 'bg-cyber-blue text-cyber-black'
+                  : 'bg-ui-dark text-cyber-blue/70 hover:bg-ui-light hover:text-cyber-blue'
               }`}
             >
               {category.name}
