@@ -4,14 +4,15 @@ import { Play } from 'lucide-react';
 export interface YouTubeVideoData {
   id: string;
   title: string;
-  videoUrl: string;   // Frontend property
-  video_url?: string; // Matches Supabase column name
+  description: string;
+  videoUrl?: string;
+  video_url?: string;
   platform?: string;
-  youtubeId?: string;  // Frontend property
-  youtube_id?: string; // Matches Supabase column name
-  description?: string;
-  tags?: string[];
+  youtubeId?: string;
+  youtube_id?: string;
   thumbnail?: string;
+  tags?: string[];
+  featuredPosition?: number; // Position in featured lists
 }
 
 interface YouTubeVideoProps {

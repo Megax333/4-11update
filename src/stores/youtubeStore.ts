@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { YouTubeVideoData } from '../components/YouTubeVideo';
 import { supabase } from '../lib/supabase';
 
@@ -36,7 +37,10 @@ type YoutubeStoreState = {
   getFeaturedVideos: (category: VideoCategory) => YouTubeVideoData[];
 };
 
-export const useYoutubeStore = create<YoutubeStoreState>()((set, get) => ({
+// Create the store with persistence
+export const useYoutubeStore = create<YoutubeStoreState>()(
+  persist(
+    (set, get) => ({
       videos: [],
       featuredVideos: {
         trending: [],
@@ -51,49 +55,44 @@ export const useYoutubeStore = create<YoutubeStoreState>()((set, get) => ({
       error: null,
       
       fetchVideos: async () => {
+        set({ isLoading: true, error: null });
         try {
-          set({ isLoading: true, error: null });
           console.log('Fetching videos from Supabase...');
           
-          // Fetch videos from Supabase
+          // STEP 1: Fetch all videos from 'videos' table
           const { data: videosData, error: videosError } = await supabase
             .from('videos')
             .select('*');
           
           if (videosError) throw videosError;
           
-          console.log('Fetched videos from Supabase:', videosData);
+          // Process the video data to standardize format
+          const processedVideos = videosData?.map(video => ({
+            id: video.id,
+            title: video.title,
+            videoUrl: video.video_url,
+            video_url: video.video_url,
+            platform: video.platform,
+            youtubeId: video.youtube_id,
+            youtube_id: video.youtube_id,
+            description: video.description,
+            tags: video.tags || [],
+            thumbnail: video.thumbnail
+          })) || [];
           
-          // Convert Supabase snake_case to frontend camelCase
-          const processedVideos = videosData?.map(video => {
-            // Create a new object with both snake_case and camelCase properties
-            return {
-              id: video.id,
-              title: video.title,
-              // Keep both versions for compatibility
-              videoUrl: video.video_url,
-              video_url: video.video_url,
-              platform: video.platform,
-              youtubeId: video.youtube_id,
-              youtube_id: video.youtube_id,
-              description: video.description,
-              tags: video.tags || [],
-              thumbnail: video.thumbnail
-            };
-          }) || [];
+          console.log(`Fetched ${processedVideos.length} videos from database`);
           
-          console.log('Processed videos:', processedVideos);
-          
-          // Fetch featured videos from Supabase
+          // STEP 2: Fetch featured videos from 'featured_videos' table
           const { data: featuredData, error: featuredError } = await supabase
             .from('featured_videos')
-            .select('*');
+            .select('*')
+            .order('position');
           
           if (featuredError) throw featuredError;
           
-          console.log('Fetched featured videos from Supabase:', featuredData);
+          console.log(`Fetched ${featuredData?.length || 0} featured video entries`);
           
-          // Organize featured videos by category
+          // STEP 3: Organize videos by category - simplified approach
           const featuredByCategory: Record<VideoCategory, YouTubeVideoData[]> = {
             trending: [],
             new: [],
@@ -104,37 +103,47 @@ export const useYoutubeStore = create<YoutubeStoreState>()((set, get) => ({
             original: []
           };
           
-          // If we have any featured videos, organize them by category
+          // Map featured videos to their full data
           if (featuredData && processedVideos.length > 0) {
-            // For each category, find the videos that are featured in that category
-            Object.keys(featuredByCategory).forEach(category => {
-              const categoryFeatured = featuredData.filter(f => f.category === category);
-              
-              // Sort by position
-              categoryFeatured.sort((a, b) => a.position - b.position);
-              
-              // Map to full video data
-              const categoryVideos = categoryFeatured.map(f => {
-                const video = processedVideos.find(v => v.id === f.video_id);
-                return video;
-              }).filter(Boolean);
-              
-              featuredByCategory[category as VideoCategory] = categoryVideos as YouTubeVideoData[];
+            featuredData.forEach(featured => {
+              const video = processedVideos.find(v => v.id === featured.video_id);
+              if (video && featured.category) {
+                const category = featured.category as VideoCategory;
+                if (featuredByCategory[category]) {
+                  featuredByCategory[category].push({
+                    ...video,
+                    featuredPosition: featured.position
+                  });
+                }
+              }
+            });
+            
+            // Sort each category by position
+            Object.keys(featuredByCategory).forEach(cat => {
+              featuredByCategory[cat as VideoCategory].sort((a, b) => 
+                (a.featuredPosition || 0) - (b.featuredPosition || 0)
+              );
             });
           }
           
-          console.log('Setting state with processed videos:', processedVideos);
+          // Log what we're storing in each category
+          Object.entries(featuredByCategory).forEach(([category, videos]) => {
+            console.log(`Category ${category}: ${videos.length} videos`);
+            videos.forEach(v => console.log(`  - ${v.title} (ID: ${v.id})`, v));
+          });
           
-          set({ 
+          // Update state with all the data
+          set({
             videos: processedVideos,
             featuredVideos: featuredByCategory,
-            isLoading: false 
+            isLoading: false,
+            error: null
           });
         } catch (error) {
           console.error('Error fetching videos:', error);
-          set({ 
-            error: error instanceof Error ? error.message : 'An unknown error occurred',
-            isLoading: false 
+          set({
+            error: error instanceof Error ? error.message : 'Failed to fetch videos',
+            isLoading: false
           });
         }
       },
@@ -494,5 +503,10 @@ export const useYoutubeStore = create<YoutubeStoreState>()((set, get) => ({
       getFeaturedVideos: (category) => {
         return get().featuredVideos[category] || [];
       }
-    })
+    }),
+    {
+      name: 'celflicks-youtube-store',
+      storage: createJSONStorage(() => localStorage)
+    }
+  )
 );
