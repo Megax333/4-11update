@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CoinIcon from './CoinIcon';
-import MissionIcon from './MissionIcon';
+import CelControlsIcon from './CelControlsIcon';
 import WalletPortal from './wallet/WalletPortal';
 import NotificationBell from './NotificationBell';
 import { useBalance } from '../hooks/useBalance';
@@ -26,8 +26,12 @@ const Navbar = () => {
             className="h-[34px] w-auto mt-0.5 -translate-x-3 object-contain mr-6 cursor-pointer hover:opacity-80 transition-opacity" 
           />
         </Link>
-        <div className="mr-12" onClick={() => setShowMissions(true)}>
-          <MissionIcon />
+        {/* Epic PlayStation-inspired Controls Button - No box to hide the shapes */}
+        <div 
+          className="mr-10 group cursor-pointer hover:scale-105 transition-transform duration-300" 
+          onClick={() => setShowMissions(true)}
+        >
+          <CelControlsIcon className="filter hover:drop-shadow-neon" size={38} />
         </div>
         <div className="ml-20">
           <SearchBar />

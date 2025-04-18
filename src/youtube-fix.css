@@ -1,0 +1,55 @@
+/* ULTRA AGGRESSIVE YOUTUBE BRANDING REMOVAL */
+
+/* Target all YouTube iframes with maximum specificity */
+iframe[src*="youtube.com"],
+iframe[src*="youtube-nocookie.com"],
+iframe[src*="youtu.be"],
+iframe#youtube-player {
+  /* Fix scaling to prevent the missing chunk in top-right */
+  transform: scale(1.03) !important; 
+  transform-origin: center center !important;
+  width: 100% !important;
+  height: 100% !important;
+  /* Block all hover events that could trigger YouTube UI */
+  pointer-events: none !important;
+}
+
+/* Minimal YouTube Video Styling */
+
+/* Ensure YouTube iframes display properly */
+iframe[src*="youtube.com"],
+iframe[src*="youtu.be"] {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Basic container styling */
+.youtube-container,
+[class*="youtube"],
+[id*="youtube"],
+[class*="player"],
+[id*="player"] {
+  position: relative !important;
+}
+
+/* Hide video title elements */
+.ytp-chrome-top,
+.ytp-title,
+.ytp-title-text,
+.ytp-title-link,
+.ytp-title-channel,
+.ytp-title-channel-logo,
+/* Target YouTube watermark/logo in bottom right corner */
+.ytp-watermark,
+.ytp-youtube-button,
+a.ytp-youtube-button,
+.ytp-chrome-bottom .ytp-youtube-button,
+.ytp-embed {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  pointer-events: none !important;
+}

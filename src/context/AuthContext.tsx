@@ -17,7 +17,14 @@ export const AuthContext = createContext<AuthContextType>({
   setShowAuthModal: () => {}
 });
 
-// useAuth is now imported from '../hooks/useAuth'
+// Define the useAuth hook directly here for easy imports
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);

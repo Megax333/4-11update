@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize2, Settings, SkipForward, Rewind, ArrowLeft } from 'lucide-react';
 import CoinIcon from '../CoinIcon';
 import { supabase } from '../../lib/supabase';
+import ImmersiveYouTubePlayer from './ImmersiveYouTubePlayer';
 
 interface CustomVideoPlayerProps {
   videoUrl: string;
@@ -28,12 +29,14 @@ const CustomVideoPlayer = ({
   hasNextEpisode,
   hasPreviousEpisode
 }: CustomVideoPlayerProps) => {
+  // Detect if this is a YouTube video
+  const [isYouTubeVideo, setIsYouTubeVideo] = useState(false);
+  const [youtubeVideoId, setYoutubeVideoId] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isAdPlaying, setIsAdPlaying] = useState(playAd);
   const [currentAd, setCurrentAd] = useState<any>(null);
@@ -202,31 +205,31 @@ const CustomVideoPlayer = ({
            (document as any).msFullscreenEnabled;
   };
 
-  const toggleFullscreen = async () => {
+  const toggleFullscreen = () => {
     if (!playerRef.current) return;
-
+    
     try {
       if (!document.fullscreenElement) {
+        // Go fullscreen
         if (playerRef.current.requestFullscreen) {
-          await playerRef.current.requestFullscreen();
+          playerRef.current.requestFullscreen();
         } else if ((playerRef.current as any).webkitRequestFullscreen) {
-          await (playerRef.current as any).webkitRequestFullscreen();
+          (playerRef.current as any).webkitRequestFullscreen();
         } else if ((playerRef.current as any).msRequestFullscreen) {
-          await (playerRef.current as any).msRequestFullscreen();
+          (playerRef.current as any).msRequestFullscreen();
         }
-        setIsFullscreen(true);
       } else {
+        // Exit fullscreen
         if (document.exitFullscreen) {
-          await document.exitFullscreen();
+          document.exitFullscreen();
         } else if ((document as any).webkitExitFullscreen) {
-          await (document as any).webkitExitFullscreen();
+          (document as any).webkitExitFullscreen();
         } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen();
+          (document as any).msExitFullscreen();
         }
-        setIsFullscreen(false);
       }
     } catch (error) {
-      console.error('Fullscreen error:', error);
+      console.error('Error toggling fullscreen:', error);
     }
   };
 
@@ -256,6 +259,7 @@ const CustomVideoPlayer = ({
     }
   };
 
+  // Handle mouse movement to show/hide controls
   const handleMouseMove = () => {
     setShowControls(true);
     if (controlsTimeoutRef.current) {
@@ -268,6 +272,36 @@ const CustomVideoPlayer = ({
     }, 3000);
   };
 
+  // Detect YouTube videos
+  useEffect(() => {
+    if (!videoUrl) return;
+    
+    const url = videoUrl.toLowerCase();
+    let isYoutube = false;
+    let videoId = '';
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      isYoutube = true;
+      
+      if (url.includes('v=')) {
+        videoId = url.split('v=')[1]?.split('&')[0] || '';
+      } else if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+      } else if (url.includes('embed/')) {
+        videoId = url.split('embed/')[1]?.split('?')[0] || '';
+      }
+    }
+    
+    setIsYouTubeVideo(isYoutube && !!videoId);
+    setYoutubeVideoId(videoId);
+    
+    console.log('Video detection:', {
+      isYoutube,
+      videoId,
+      originalUrl: videoUrl
+    });
+  }, [videoUrl]);
+  
   return (
     <div 
       ref={playerRef}
@@ -322,23 +356,28 @@ const CustomVideoPlayer = ({
       )}
 
       {/* Main Video Player */}
-      <video
-        ref={videoRef}
-        preload="auto"
-        autoPlay={!isAdPlaying} // Auto play if no ad is playing
-        src={videoUrl}
-        className="w-full h-full"
-        playsInline
-        muted={false}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onClick={() => !isAdPlaying && togglePlay()}
-        onLoadedData={() => {
-          if (!isAdPlaying && videoRef.current) {
-            videoRef.current.play().catch(console.error);
-          }
-        }}
-      />
+      {!isAdPlaying && !isYouTubeVideo && (
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          className="w-full h-full object-contain"
+          onClick={togglePlay}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          playsInline
+        />
+      )}
+      
+      {/* YouTube Player */}
+      {!isAdPlaying && isYouTubeVideo && youtubeVideoId && (
+        <div className="absolute inset-0 w-full h-full bg-black">
+          <ImmersiveYouTubePlayer 
+            videoId={youtubeVideoId}
+            onTogglePlay={togglePlay}
+            isPlaying={isPlaying}
+          />
+        </div>
+      )}
 
       {/* Episode Info - Show only when controls are visible and not playing ad */}
       {showControls && !isAdPlaying && (

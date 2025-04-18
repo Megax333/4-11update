@@ -1,0 +1,119 @@
+:root[data-theme="blue"] {
+  /* Current blue theme */
+  --cyber-black: #0B0B1E;
+  --cyber-dark: #12123D;
+  --cyber-blue: #00F0FF;
+  --cyber-purple: #B026FF;
+  --cyber-pink: #FF2E9A;
+  --cyber-orange: #FF6B2B;
+  --ui-dark: #1A1A3A;
+  --ui-light: #2A2A5A;
+  --ui-highlight: #3A3A7A;
+  --glow-blue: #4DFFFF;
+  --glow-purple: #D15FFF;
+  --neon-blue: 0 0 10px #00F0FF;
+  --neon-purple: 0 0 10px #B026FF;
+  --neon-glow: 0 0 20px rgba(0, 240, 255, 0.5);
+  --cyber-gradient: linear-gradient(45deg, #0B0B1E 0%, #12123D 100%);
+  --glow-gradient: linear-gradient(90deg, #00F0FF 0%, #B026FF 100%);
+}
+
+:root[data-theme="purple"] {
+  /* Original purple theme based on screenshot */
+  --cyber-black: #0E0114;
+  --cyber-dark: #1E112A;
+  --cyber-blue: #A742FF; /* Purple instead of blue */
+  --cyber-purple: #6F2ED6; /* Main purple color */
+  --cyber-pink: #FF4DD8; /* Hot pink accent */
+  --cyber-orange: #FF6B8B; /* Pinkish accent */
+  --ui-dark: #2D1A3D;
+  --ui-light: #3A2254;
+  --ui-highlight: #4A2E66;
+  --glow-blue: #9F66FF; /* Light purple glow */
+  --glow-purple: #FF7AE5; /* Pink glow */
+  --neon-blue: 0 0 10px #A742FF;
+  --neon-purple: 0 0 10px #FF4DD8;
+  --neon-glow: 0 0 20px rgba(167, 66, 255, 0.5);
+  --cyber-gradient: linear-gradient(45deg, #1E112A 0%, #2D1A3D 100%);
+  --glow-gradient: linear-gradient(90deg, #A742FF 0%, #FF4DD8 100%);
+}
+
+/* Apply CSS variables to the respective Tailwind classes using dynamic styling */
+.bg-cyber-black { background-color: var(--cyber-black) !important; }
+.bg-cyber-dark { background-color: var(--cyber-dark) !important; }
+.text-cyber-blue { color: var(--cyber-blue) !important; }
+.text-cyber-purple { color: var(--cyber-purple) !important; }
+.text-cyber-pink { color: var(--cyber-pink) !important; }
+.text-cyber-orange { color: var(--cyber-orange) !important; }
+.text-cyber-black { color: var(--cyber-black) !important; }
+.bg-ui-dark { background-color: var(--ui-dark) !important; }
+.bg-ui-light { background-color: var(--ui-light) !important; }
+.bg-ui-highlight { background-color: var(--ui-highlight) !important; }
+.text-glow-blue { color: var(--glow-blue) !important; }
+.text-glow-purple { color: var(--glow-purple) !important; }
+.border-cyber-blue { border-color: var(--cyber-blue) !important; }
+.border-cyber-purple { border-color: var(--cyber-purple) !important; }
+.hover\:bg-ui-dark:hover { background-color: var(--ui-dark) !important; }
+.hover\:bg-ui-light:hover { background-color: var(--ui-light) !important; }
+.hover\:bg-ui-highlight:hover { background-color: var(--ui-highlight) !important; }
+.hover\:text-cyber-blue:hover { color: var(--cyber-blue) !important; }
+.hover\:text-cyber-purple:hover { color: var(--cyber-purple) !important; }
+.shadow-neon-blue { box-shadow: var(--neon-blue) !important; }
+.shadow-neon-purple { box-shadow: var(--neon-purple) !important; }
+.shadow-neon-glow { box-shadow: var(--neon-glow) !important; }
+.hover\:shadow-neon-blue:hover { box-shadow: var(--neon-blue) !important; }
+.hover\:shadow-neon-purple:hover { box-shadow: var(--neon-purple) !important; }
+.hover\:shadow-neon-glow:hover { box-shadow: var(--neon-glow) !important; }
+.bg-cyber-gradient { background-image: var(--cyber-gradient) !important; }
+.bg-glow-gradient { background-image: var(--glow-gradient) !important; }
+
+/* Fix for gradient text that uses background-clip */
+.bg-gradient-to-r.from-cyber-blue.to-cyber-purple.bg-clip-text.text-transparent {
+  background-image: var(--glow-gradient) !important;
+}
+
+/* Animate theme transition */
+* {
+  transition-property: color, background-color, border-color, box-shadow, background-image;
+  transition-duration: 0.3s;
+  transition-timing-function: ease-in-out;
+}
+
+/* Theme-specific overrides using theme- classes */
+.theme-purple {
+  --cyber-black: #0E0114 !important;
+  --cyber-dark: #1E112A !important;
+  --cyber-blue: #A742FF !important;
+  --cyber-purple: #6F2ED6 !important;
+  --cyber-pink: #FF4DD8 !important;
+  --cyber-orange: #FF6B8B !important;
+  --ui-dark: #2D1A3D !important;
+  --ui-light: #3A2254 !important;
+  --ui-highlight: #4A2E66 !important;
+  --glow-blue: #9F66FF !important;
+  --glow-purple: #FF7AE5 !important;
+  --neon-blue: 0 0 10px #A742FF !important;
+  --neon-purple: 0 0 10px #FF4DD8 !important;
+  --neon-glow: 0 0 20px rgba(167, 66, 255, 0.5) !important;
+  --cyber-gradient: linear-gradient(45deg, #1E112A 0%, #2D1A3D 100%) !important;
+  --glow-gradient: linear-gradient(90deg, #A742FF 0%, #FF4DD8 100%) !important;
+}
+
+.theme-blue {
+  --cyber-black: #0B0B1E !important;
+  --cyber-dark: #12123D !important;
+  --cyber-blue: #00F0FF !important;
+  --cyber-purple: #B026FF !important;
+  --cyber-pink: #FF2E9A !important;
+  --cyber-orange: #FF6B2B !important;
+  --ui-dark: #1A1A3A !important;
+  --ui-light: #2A2A5A !important;
+  --ui-highlight: #3A3A7A !important;
+  --glow-blue: #4DFFFF !important;
+  --glow-purple: #D15FFF !important;
+  --neon-blue: 0 0 10px #00F0FF !important;
+  --neon-purple: 0 0 10px #B026FF !important;
+  --neon-glow: 0 0 20px rgba(0, 240, 255, 0.5) !important;
+  --cyber-gradient: linear-gradient(45deg, #0B0B1E 0%, #12123D 100%) !important;
+  --glow-gradient: linear-gradient(90deg, #00F0FF 0%, #B026FF 100%) !important;
+}

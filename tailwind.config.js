@@ -31,6 +31,16 @@ export default {
         'neon-blue': '0 0 10px #00F0FF',
         'neon-purple': '0 0 10px #B026FF',
         'neon-glow': '0 0 20px rgba(0, 240, 255, 0.5)'
+      },
+      keyframes: {
+        fadeout: {
+          '0%': { opacity: '1' },
+          '50%': { opacity: '1' },
+          '100%': { opacity: '0' }
+        }
+      },
+      animation: {
+        'fadeout': 'fadeout 4s ease-in-out forwards'
       }
     },
   },

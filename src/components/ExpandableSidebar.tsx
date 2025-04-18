@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Menu, Compass, Users2, Headphones, Users, Bookmark, MessageCircle, UserCircle2, ChevronRight } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import ThemeSwitcherIcon from './ThemeSwitcherIcon';
 import { useProfile } from '../hooks/useProfile';
 import { useMissionStore } from '../stores/missionStore';
 import { useProfile as useProfileContext } from '../context/ProfileContext';
@@ -127,6 +128,25 @@ const ExpandableSidebar = () => {
             </span>
           </button>
         ))}
+        
+        {/* Theme Switcher Button */}
+        <div 
+          className={cn(
+            "flex items-center gap-4 py-4 px-6 transition-all duration-200",
+            "hover:bg-ui-dark hover:shadow-neon-purple",
+            !isExpanded && "justify-center"
+          )}
+        >
+          <ThemeSwitcherIcon />
+          <span
+            className={cn(
+              "whitespace-nowrap transition-all duration-300",
+              isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"
+            )}
+          >
+            Theme
+          </span>
+        </div>
         
         {/* User Profile */}
         {user && (

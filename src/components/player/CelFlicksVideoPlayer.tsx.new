@@ -1,0 +1,660 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Play, Pause, Volume2, VolumeX, Maximize2, 
+  X, MessageCircle, Send
+} from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../context/AuthContext';
+import CoinIcon from '../CoinIcon';
+import { YouTubeVideoData } from '../YouTubeVideo';
+
+// Load the YouTube API
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
+
+type Comment = {
+  id: string;
+  user_id: string;
+  username: string;
+  avatar_url?: string;
+  content: string;
+  xce_amount: number;
+  created_at: string;
+};
+
+interface CelFlicksVideoPlayerProps {
+  video: YouTubeVideoData;
+  onClose: () => void;
+}
+
+const CelFlicksVideoPlayer: React.FC<CelFlicksVideoPlayerProps> = ({ video, onClose }) => {
+  const { user } = useAuth();
+  const ytPlayerRef = useRef<any>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(80);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [xceAmount, setXceAmount] = useState(0.5);
+  const [showControls, setShowControls] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const [isBuffering, setIsBuffering] = useState(true);
+  const [playerReady, setPlayerReady] = useState(false);
+
+  // Extract video ID from URL
+  const getVideoId = () => {
+    if (video.youtubeId) return video.youtubeId;
+    
+    const url = video.videoUrl;
+    if (url.includes('youtube.com')) {
+      if (url.includes('v=')) {
+        return url.split('v=')[1]?.split('&')[0] || '';
+      } else if (url.includes('embed/')) {
+        return url.split('embed/')[1]?.split('?')[0] || '';
+      }
+    } else if (url.includes('youtu.be')) {
+      return url.split('youtu.be/')[1]?.split('?')[0] || '';
+    }
+    return '';
+  };
+
+  const videoId = getVideoId();
+
+  // Initialize YouTube API
+  useEffect(() => {
+    // Add YouTube API script if it doesn't exist
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      
+      // Create YouTube player when API is ready
+      window.onYouTubeIframeAPIReady = initializePlayer;
+    } else {
+      initializePlayer();
+    }
+    
+    return () => {
+      // Clean up
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.destroy();
+        } catch (error) {
+          console.error('Error destroying YouTube player:', error);
+        }
+      }
+    };
+  }, [videoId]);
+
+  // Fetch comments
+  useEffect(() => {
+    fetchComments();
+  }, [video.id]);
+
+  const fetchComments = async () => {
+    const { data, error } = await supabase
+      .from('video_comments')
+      .select(`
+        id,
+        user_id,
+        content,
+        xce_amount,
+        created_at,
+        users:user_id (username, avatar_url)
+      `)
+      .eq('video_id', video.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching comments:', error);
+      return;
+    }
+    
+    // Format comments
+    const formattedComments = data.map((comment: any) => ({
+      id: comment.id,
+      user_id: comment.user_id,
+      username: comment.users?.username || 'Anonymous',
+      avatar_url: comment.users?.avatar_url || null,
+      content: comment.content,
+      xce_amount: comment.xce_amount,
+      created_at: comment.created_at
+    }));
+    
+    setComments(formattedComments);
+  };
+
+  // Handle keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!showControls) {
+        setShowControls(true);
+        startControlsTimeout();
+      }
+      
+      switch (e.key.toLowerCase()) {
+        case ' ':
+        case 'k':
+          e.preventDefault();
+          togglePlayPause();
+          break;
+        case 'f':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case 'm':
+          e.preventDefault();
+          toggleMute();
+          break;
+        case 'arrowright':
+          e.preventDefault();
+          seekTo(currentTime + 10);
+          break;
+        case 'arrowleft':
+          e.preventDefault();
+          seekTo(currentTime - 10);
+          break;
+        case 'escape':
+          if (isFullscreen) {
+            document.exitFullscreen();
+          }
+          break;
+        default:
+          break;
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentTime, isPlaying, isMuted, isFullscreen, showControls]);
+
+  // Set up controls timeout
+  useEffect(() => {
+    if (showControls) {
+      startControlsTimeout();
+    }
+    
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [showControls]);
+
+  const startControlsTimeout = () => {
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    
+    controlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+  };
+
+  // Initialize YouTube player
+  const initializePlayer = () => {
+    if (!window.YT) {
+      console.log('YouTube API not yet loaded, retrying...');
+      setTimeout(initializePlayer, 100);
+      return;
+    }
+    
+    const playerElement = document.getElementById('youtube-container');
+    if (!playerElement) return;
+    
+    // Create YouTube player with extreme restrictions on UI elements
+    ytPlayerRef.current = new window.YT.Player(playerElement, {
+      videoId: videoId,
+      playerVars: {
+        autoplay: 1,
+        controls: 0,       // Hide controls
+        showinfo: 0,       // Hide video title and uploader info
+        rel: 0,            // Don't show related videos
+        fs: 0,             // Disable fullscreen button
+        modestbranding: 1, // Hide YouTube logo as much as possible
+        iv_load_policy: 3, // Hide annotations
+        playsinline: 1,    // Play inline on mobile
+        disablekb: 1,      // Disable keyboard controls
+        cc_load_policy: 0, // Hide captions by default
+        origin: window.location.origin, // Set origin for security
+        enablejsapi: 1     // Enable JavaScript API
+      },
+      events: {
+        onReady: onPlayerReady,
+        onStateChange: onPlayerStateChange,
+        onError: (e: any) => console.error('YouTube player error:', e)
+      }
+    });
+  };
+
+  // YouTube player event handlers
+  const onPlayerReady = (event: any) => {
+    setPlayerReady(true);
+    
+    // Set initial volume
+    event.target.setVolume(volume);
+    
+    // Start playing
+    event.target.playVideo();
+    
+    // Setup interval to update current time
+    const interval = setInterval(() => {
+      if (ytPlayerRef.current) {
+        setCurrentTime(ytPlayerRef.current.getCurrentTime() || 0);
+        setDuration(ytPlayerRef.current.getDuration() || 0);
+      }
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  };
+
+  const onPlayerStateChange = (event: any) => {
+    // Update isPlaying based on player state
+    setIsPlaying(event.data === window.YT.PlayerState.PLAYING);
+    
+    // Update buffering state
+    setIsBuffering(event.data === window.YT.PlayerState.BUFFERING);
+  };
+
+  // Video control functions
+  const togglePlayPause = () => {
+    if (!ytPlayerRef.current) return;
+    
+    if (isPlaying) {
+      ytPlayerRef.current.pauseVideo();
+    } else {
+      ytPlayerRef.current.playVideo();
+    }
+    
+    setIsPlaying(!isPlaying);
+    setShowControls(true);
+  };
+
+  const toggleMute = () => {
+    if (!ytPlayerRef.current) return;
+    
+    if (isMuted) {
+      ytPlayerRef.current.unMute();
+      ytPlayerRef.current.setVolume(volume);
+    } else {
+      ytPlayerRef.current.mute();
+    }
+    
+    setIsMuted(!isMuted);
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseInt(e.target.value);
+    
+    if (!ytPlayerRef.current) return;
+    
+    ytPlayerRef.current.setVolume(newVolume);
+    
+    if (isMuted && newVolume > 0) {
+      ytPlayerRef.current.unMute();
+      setIsMuted(false);
+    }
+    
+    setVolume(newVolume);
+  };
+
+  const seekTo = (time: number) => {
+    if (!ytPlayerRef.current) return;
+    
+    ytPlayerRef.current.seekTo(time, true);
+    setCurrentTime(time);
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(e.target.value);
+    seekTo(time);
+  };
+
+  // Toggle fullscreen and hide comments panel in fullscreen mode
+  const toggleFullscreen = () => {
+    if (!videoContainerRef.current) return;
+    try {
+      if (!document.fullscreenElement) {
+        videoContainerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+        // When entering fullscreen, make sure controls are shown briefly
+        setShowControls(true);
+        startControlsTimeout();
+      } else {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error('Error toggling fullscreen:', err);
+    }
+    setShowControls(true);
+  };
+
+  // Comment functions
+  const handleCommentSubmit = async () => {
+    if (!user || !newComment.trim() || xceAmount <= 0) return;
+    
+    try {
+      // First check user balance
+      const { data: userBalanceData, error: balanceError } = await supabase
+        .from('user_balances')
+        .select('xce_amount')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (balanceError) {
+        console.error('Error checking user balance:', balanceError);
+        alert('Error checking your balance. Please try again.');
+        return;
+      }
+      
+      const userBalance = userBalanceData?.xce_amount || 0;
+      
+      if (userBalance < xceAmount) {
+        alert(`Insufficient XCE balance. You have ${userBalance.toFixed(2)} XCE.`);
+        return;
+      }
+      
+      // Deduct XCE from user balance
+      const { error: updateBalanceError } = await supabase
+        .from('user_balances')
+        .update({ xce_amount: userBalance - xceAmount })
+        .eq('user_id', user.id);
+      
+      if (updateBalanceError) {
+        console.error('Error updating user balance:', updateBalanceError);
+        alert('Error processing your XCE. Please try again.');
+        return;
+      }
+      
+      // Add comment
+      const { error: commentError } = await supabase
+        .from('video_comments')
+        .insert({
+          video_id: video.id,
+          user_id: user.id,
+          content: newComment,
+          xce_amount: xceAmount
+        })
+        .select();
+      
+      if (commentError) {
+        console.error('Error adding comment:', commentError);
+        alert('Error posting your comment. Please try again.');
+        
+        // Refund the XCE if comment failed
+        await supabase
+          .from('user_balances')
+          .update({ xce_amount: userBalance })
+          .eq('user_id', user.id);
+          
+        return;
+      }
+      
+      // Clear comment input
+      setNewComment('');
+      
+      // Refresh comments
+      fetchComments();
+      
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+      alert('Something went wrong. Please try again.');
+    }
+  };
+
+  // Handle mouse move to show controls
+  const handleMouseMove = () => {
+    if (!showControls) {
+      setShowControls(true);
+    }
+    
+    startControlsTimeout();
+  };
+
+  // Format time
+  const formatTime = (seconds: number): string => {
+    if (isNaN(seconds) || !isFinite(seconds)) {
+      return '0:00';
+    }
+    
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    
+    if (mins >= 60) {
+      const hours = Math.floor(mins / 60);
+      const remainingMins = mins % 60;
+      return `${hours}:${remainingMins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-cyber-black/90 z-50 flex items-center justify-center">
+      {/* Close Button */}
+      <button 
+        onClick={onClose}
+        className="absolute top-4 right-4 p-2 text-white hover:text-cyber-blue transition-colors z-50"
+      >
+        <X size={24} />
+      </button>
+      
+      {/* Video Player Container */}
+      <div
+        ref={videoContainerRef}
+        className="w-full h-full max-w-screen-xl max-h-[90vh] relative overflow-hidden"
+        onMouseMove={handleMouseMove}
+      >
+        {/* Main Container - flexbox layout with comments visible only when not in fullscreen */}
+        <div className={`flex flex-col lg:flex-row w-full h-full relative ${isFullscreen ? 'bg-black' : ''}`}>
+          {/* Video Area */}
+          <div 
+            className={`relative w-full ${isFullscreen ? 'lg:w-full' : 'lg:w-3/4'} h-full bg-cyber-black flex items-center justify-center overflow-hidden`}
+            style={{ minHeight: '300px' }}
+          >
+            {/* YouTube Player */}
+            <div className="relative w-full h-full aspect-video flex items-center justify-center">
+              <div 
+                id="youtube-container" 
+                className="absolute inset-0 bg-cyber-black"
+                onClick={togglePlayPause}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  overflow: 'hidden'
+                }}
+              ></div>
+              
+              {/* Additional hidden overlay to block YouTube elements */}
+              <div className="absolute top-0 left-0 w-full h-12 bg-cyber-black z-10"></div>
+              <div className="absolute bottom-0 left-0 w-full h-12 bg-cyber-black z-10"></div>
+              <div className="absolute top-0 right-0 h-full w-12 bg-cyber-black z-10"></div>
+              <div className="absolute top-0 left-0 h-full w-12 bg-cyber-black z-10"></div>
+              
+              {!playerReady && (
+                <div className="absolute inset-0 flex items-center justify-center bg-cyber-black z-10">
+                  <div className="w-12 h-12 border-4 border-cyber-blue/30 border-t-cyber-blue rounded-full animate-spin"></div>
+                </div>
+              )}
+              
+              {isBuffering && playerReady && (
+                <div className="absolute inset-0 flex items-center justify-center bg-cyber-black/50 z-10">
+                  <div className="w-12 h-12 border-4 border-cyber-blue/30 border-t-cyber-blue rounded-full animate-spin"></div>
+                </div>
+              )}
+              
+              {/* Video Controls */}
+              {showControls && (
+                <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 z-30">
+                  <div className="flex items-center space-x-3">
+                    {/* Play/Pause */}
+                    <button onClick={togglePlayPause} className="text-white hover:text-cyber-blue transition-colors">
+                      {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                    </button>
+                    
+                    {/* Volume */}
+                    <div className="flex items-center space-x-2">
+                      <button onClick={toggleMute} className="text-white hover:text-cyber-blue transition-colors">
+                        {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                      </button>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={isMuted ? 0 : volume}
+                        onChange={handleVolumeChange}
+                        className="w-20 h-1 bg-white/30 rounded-full cursor-pointer appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-cyber-blue [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-neon-blue"
+                      />
+                    </div>
+                    
+                    {/* Time */}
+                    <div className="text-white text-sm">
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="flex-grow">
+                      <input
+                        type="range"
+                        min="0"
+                        max={duration || 100}
+                        step="0.1"
+                        value={currentTime}
+                        onChange={handleSeek}
+                        className="w-full h-1 bg-white/30 rounded-full cursor-pointer appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-cyber-blue [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-neon-blue"
+                      />
+                    </div>
+                    
+                    {/* Fullscreen */}
+                    <button onClick={toggleFullscreen} className="text-white hover:text-cyber-blue transition-colors">
+                      <Maximize2 size={20} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Comments Panel - Only visible when not in fullscreen */}
+          {!isFullscreen && (
+            <div className="hidden lg:block lg:w-1/4 h-full border-l border-cyber-blue/20 bg-cyber-dark overflow-y-auto">
+              <div className="flex justify-between items-center p-4 border-b border-cyber-blue/20 bg-ui-dark">
+                <h3 className="text-lg font-medium text-white">{video.title}</h3>
+              </div>
+              
+              {/* Comments List */}
+              <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-cyber-blue/30 scrollbar-track-transparent p-4" style={{maxHeight: "calc(100% - 180px)"}}>
+                {comments.length > 0 ? (
+                  comments.map(comment => (
+                    <div key={comment.id} className="mb-4 bg-ui-light/30 rounded-lg p-3">
+                      <div className="flex items-center mb-2">
+                        <div className="w-8 h-8 rounded-full bg-cyber-purple/20 overflow-hidden mr-2">
+                          {comment.avatar_url ? (
+                            <img src={comment.avatar_url} alt={comment.username} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-cyber-purple">
+                              {comment.username.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium text-white">{comment.username}</div>
+                          <div className="text-xs text-cyber-blue/60 flex items-center">
+                            <CoinIcon size={12} className="mr-1" />
+                            <span>{comment.xce_amount} XCE</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-white/90 text-sm">{comment.content}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-cyber-blue/50">
+                    <MessageCircle size={40} className="mb-2 opacity-50" />
+                    <p>Be the first to comment</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Comment Input */}
+              {user ? (
+                <div className="p-4 border-t border-cyber-blue/30 bg-ui-dark">
+                  <div className="flex mb-2">
+                    <input
+                      type="text"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Add a comment..."
+                      className="flex-1 bg-cyber-dark px-3 py-2 rounded-l-md border-l border-t border-b border-cyber-blue/30 focus:outline-none focus:border-cyber-blue text-white"
+                    />
+                    <button
+                      onClick={handleCommentSubmit}
+                      disabled={!newComment.trim() || xceAmount <= 0}
+                      className="bg-cyber-blue hover:bg-cyber-purple disabled:bg-cyber-blue/50 disabled:cursor-not-allowed px-3 py-2 rounded-r-md transition-colors"
+                    >
+                      <Send size={18} className="text-cyber-black" />
+                    </button>
+                  </div>
+                  
+                  {/* XCE Donation Slider */}
+                  <div>
+                    <div className="flex justify-between text-xs text-cyber-blue/80 mb-1">
+                      <span>Support Amount</span>
+                      <span className="flex items-center">
+                        <CoinIcon size={12} className="mr-1" />
+                        {xceAmount.toFixed(2)} XCE
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0.1}
+                      max={10}
+                      step={0.1}
+                      value={xceAmount}
+                      onChange={(e) => setXceAmount(parseFloat(e.target.value))}
+                      className="w-full h-1 bg-cyber-dark rounded-full cursor-pointer appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-cyber-blue [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-neon-blue"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 border-t border-cyber-blue/30 bg-ui-dark text-center text-sm">
+                  <p className="text-cyber-blue/80 mb-2">Sign in to comment and support</p>
+                  <button className="px-4 py-2 bg-cyber-blue hover:bg-cyber-purple text-cyber-black font-medium rounded-md transition-colors">
+                    Sign In
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {/* Video Title Overlay - when controls are hidden */}
+        {!showControls && (
+          <div className="absolute top-4 left-4 max-w-md px-4 py-2 bg-cyber-black/60 backdrop-blur-sm rounded-md z-20 animate-fadeout">
+            <h2 className="text-lg font-semibold text-white">{video.title}</h2>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CelFlicksVideoPlayer;

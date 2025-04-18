@@ -1,6 +1,6 @@
 {/* Update the AdminPanel component to include the AdManager */}
-import React, { useState, useEffect } from 'react';
-import { Settings, Film, Upload, X, Save, LayoutGrid, Users, Tv, PlaySquare } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Settings, Film, Upload, X, LayoutGrid, Users, Tv, PlaySquare, Youtube } from 'lucide-react';
 import MovieEditor from './MovieEditor';
 import PreviewEditor from './PreviewEditor';
 import EpisodeEditor from './EpisodeEditor';
@@ -8,6 +8,8 @@ import CategoryEditor from './CategoryEditor';
 import CreatorEditor from './CreatorEditor';
 import LiveTVEditor from './LiveTVEditor';
 import AdManager from './AdManager';
+import VideoManager from './VideoManager';
+import FeaturedVideosManager from './FeaturedVideosManager';
 import { useMovieStore } from '../../stores/movieStore';
 import AdminPortal from './AdminPortal';
 
@@ -87,6 +89,16 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               >
                 <PlaySquare size={20} />
                 <span>Advertisements</span>
+              </button>
+              <button
+                key="videos-tab"
+                onClick={() => setActiveTab('videos')}
+                className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
+                  activeTab === 'videos' ? 'bg-purple-600' : 'hover:bg-white/5'
+                }`}
+              >
+                <Youtube size={20} />
+                <span>Videos</span>
               </button>
               <button
                 key="categories-tab"
@@ -224,6 +236,24 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               <div>
                 <h2 className="text-2xl font-bold mb-6">Settings</h2>
                 {/* Add settings content */}
+              </div>
+            )}
+
+            {activeTab === 'videos' && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Video Management</h2>
+                </div>
+                <div className="mb-8">
+                  <h3 className="text-xl font-bold text-cyber-blue mb-3">Video Library</h3>
+                  <p className="text-cyber-blue/70 mb-4">Add, edit, or remove videos from various platforms.</p>
+                  <VideoManager />
+                </div>
+                <div className="mt-8">
+                  <h3 className="text-xl font-bold text-cyber-blue mb-3">Featured Videos Manager</h3>
+                  <p className="text-cyber-blue/70 mb-4">Control which videos appear in each section of your homepage.</p>
+                  <FeaturedVideosManager />
+                </div>
               </div>
             )}
           </div>

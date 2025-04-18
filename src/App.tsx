@@ -16,7 +16,7 @@ import HistoryPage from './pages/HistoryPage';
 import TempProfileModal from './components/TempProfileModal';
 import PaymentPage from './components/wallet/PaymentPage';
 import AvatarDebugger from './components/debug/AvatarDebugger';
-import { supabase } from './lib/supabase';
+import AdminPage from './pages/AdminPage';
 import { useEffect } from 'react';
 
 // PayPal configuration options
@@ -57,6 +57,7 @@ function App() {
                     <Route path="/history" element={<HistoryPage />} />
                     <Route path="/payment" element={<PaymentPage />} />
                     <Route path="/debug/avatars" element={<AvatarDebugger />} />
+                    <Route path="/admin" element={<AdminPage />} />
                   </Routes>
                 </div>
                 <TempProfileModal />

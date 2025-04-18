@@ -1,3 +1,5 @@
+@import './theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,7 +11,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #12123D;
+  background: var(--cyber-dark);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -24,7 +26,7 @@
 /* Hide scrollbar for Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(147, 51, 234, 0.3) #0A0A0F;
+  scrollbar-color: var(--cyber-purple) var(--cyber-black);
 }
 
 @font-face {
@@ -56,6 +58,7 @@
 }
 
 @layer utilities {
+  /* Existing utilities */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -67,6 +70,24 @@
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  
+  /* New sci-fi theme animation utilities */
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
+  }
+  
+  .animate-ping-slow {
+    animation: ping 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  
+  .filter {
+    filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+  }
+  
+  .drop-shadow-neon {
+    --tw-drop-shadow: drop-shadow(0 0 8px var(--cyber-blue));
+    filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
   }
   
   .custom-scrollbar::-webkit-scrollbar {
@@ -97,5 +118,15 @@
     25% { opacity: 0.8; transform: scale(0.95); }
     50% { opacity: 1; transform: scale(1.1); }
     75% { opacity: 0.9; transform: scale(0.98); }
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes ping {
+    0% { transform: scale(0.2); opacity: 0.8; }
+    70%, 100% { transform: scale(1.5); opacity: 0; }
   }
 }

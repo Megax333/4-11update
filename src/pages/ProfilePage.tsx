@@ -4,7 +4,7 @@ import { useProfile } from '../context/ProfileContext';
 import { MapPin, Link as LinkIcon, Calendar, Users, Check, Trophy, Star, ChevronRight, Heart, MessageCircle, Share2, Edit, Camera } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import CoinIcon from '../components/CoinIcon';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 interface Profile {
   id: string;

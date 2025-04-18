@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   PaymentElement, 
   useStripe, 
@@ -7,7 +7,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { createPaymentIntent, confirmPayment } from '../../api/stripe';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 
 // Load Stripe outside of the component to avoid recreating the Stripe object on renders
 // Use your own Stripe publishable key from your Stripe dashboard
@@ -20,6 +20,26 @@ console.log('Stripe key being used:', STRIPE_PUBLISHABLE_KEY ?
 
 // Initialize Stripe with the publishable key
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
+
+// Function to check if Stripe loaded properly (for ad-blocker detection)
+function hasAdBlocker(): Promise<boolean> {
+  return new Promise(resolve => {
+    const testElement = document.createElement('div');
+    testElement.className = 'stripe-test';
+    testElement.style.display = 'none';
+    document.body.appendChild(testElement);
+    
+    // Wait a moment for potential ad-blockers to act
+    setTimeout(() => {
+      // Check for tampering with Stripe script (indicating ad-blocker)
+      const isBlocked = window.Stripe === undefined || 
+                       !document.querySelector('script[src*="stripe.com"]') ||
+                       document.querySelector('.stripe-test')?.clientHeight === 0;
+      document.body.removeChild(testElement);
+      resolve(isBlocked);
+    }, 250);
+  });
+}
 
 interface Package {
   id: string;
@@ -45,7 +65,47 @@ export const StripePaymentContainer: React.FC<StripePaymentContainerProps> = ({
   const [paymentIntentId, setPaymentIntentId] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [stripeLoadError, setStripeLoadError] = useState<boolean>(false);
   
+  // Check for potential ad-blockers
+  useEffect(() => {
+    let mounted = true;
+    
+    const checkForAdBlocker = async () => {
+      try {
+        const blocked = await hasAdBlocker();
+        
+        // Only update state if the component is still mounted
+        if (mounted) {
+          if (blocked) {
+            console.warn('Ad-blocker detected! This might interfere with payments.');
+            setStripeLoadError(true);
+          }
+          setLoading(false);
+        }
+      } catch (err) {
+        if (mounted) {
+          console.error('Error checking for ad-blocker:', err);
+          setLoading(false);
+        }
+      }
+      
+      // Set a fallback timeout to prevent infinite loading
+      if (mounted) {
+        setTimeout(() => {
+          if (mounted) setLoading(false);
+        }, 5000);
+      }
+    };
+    
+    checkForAdBlocker();
+    
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Request a payment intent when the selected package changes
   useEffect(() => {
     const getPaymentIntent = async () => {
@@ -146,6 +206,37 @@ export const StripePaymentContainer: React.FC<StripePaymentContainerProps> = ({
     return (
       <div className="flex items-center justify-center p-6">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyber-blue"></div>
+      </div>
+    );
+  }
+  
+  if (stripeLoadError) {
+    return (
+      <div className="bg-ui-dark rounded-xl p-8 space-y-4">
+        <h3 className="text-xl font-medium text-cyber-blue">Payment Service Issue</h3>
+        <p className="text-cyber-blue/70">Your browser appears to be blocking Stripe payment scripts. This is typically caused by an ad-blocker or privacy extension.</p>
+        <div className="bg-ui-light/30 rounded-lg p-4">
+          <p className="text-sm">To proceed with payment, try one of these options:</p>
+          <ul className="list-disc pl-5 text-sm space-y-1 mt-2">
+            <li>Temporarily disable your ad-blocker for this site</li>
+            <li>Use a different browser without privacy extensions</li>
+            <li>Add this site to your ad-blocker's allowlist</li>
+          </ul>
+        </div>
+        <div className="flex justify-between pt-4">
+          <button
+            onClick={onCancel}
+            className="px-6 py-3 rounded-xl bg-ui-dark text-cyber-blue/70 hover:bg-ui-light hover:text-cyber-blue transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 rounded-xl bg-cyber-purple text-white font-medium hover:bg-cyber-blue transition-all"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -254,7 +345,7 @@ export const StripePaymentContainer: React.FC<StripePaymentContainerProps> = ({
     },
   };
   
-  // Only render Elements once we have clientSecret
+  // Render the payment form when ready
   return (
     <Elements stripe={stripePromise} options={options}>
       <StripePaymentForm 
@@ -396,7 +487,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
     processing: processing
   });
 
-  const handlePayButtonClick = (e: React.MouseEvent) => {
+  const handlePayButtonClick = () => {
     console.log('Pay button clicked directly');
     // We'll let the form submission handle it, this is just for debugging
   };
@@ -448,5 +539,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
     </form>
   );
 };
+
+
 
 export default StripePaymentContainer;

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PayPalButtons } from '@paypal/react-paypal-js';
 import { supabase } from '../../lib/supabase';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 import CoinIcon from '../CoinIcon';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 import StripePaymentContainer from './StripePaymentForm';

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Flame } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import LiveTV from './LiveTV';
 import Library from './Library';
 import Fundraisers from './Fundraisers';
@@ -44,13 +43,14 @@ const ContentGrid = () => {
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
+              className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all font-medium shadow-lg ${
                 activeCategory === category.id
-                  ? 'bg-cyber-blue text-cyber-black'
-                  : 'bg-ui-dark text-cyber-blue/70 hover:bg-ui-light hover:text-cyber-blue'
+                  ? 'bg-cyber-blue text-cyber-black border border-white/20 shadow-neon-blue'
+                  : 'bg-ui-dark border border-cyber-blue/20 text-cyber-blue/70 hover:bg-ui-light hover:text-cyber-blue hover:shadow-neon-purple'
               }`}
             >
-              {category.name}
+              {/* Display XCE Network instead of promo stream */}
+              {category.id === 'promo' ? 'XCE Network' : category.name}
             </button>
           ))}
         </div>

@@ -1,15 +1,5 @@
 import { useContext } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-
-// Define the Auth context type - this should match what's in AuthContext.tsx
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  showAuthModal: boolean;
-  setShowAuthModal: (show: boolean, mode?: 'login' | 'signup') => void;
-}
-
-// Import the AuthContext from the context file
+import { User } from '@supabase/supabase-js';
 import { AuthContext } from '../context/AuthContext';
 
 // Auth hook to be used in components
@@ -24,23 +14,23 @@ export const useAuth = () => {
 // Create a mock version with a test user for development and testing
 export const useAuthMock = () => {
   // Mock user for testing purposes
-  const mockUser = {
+  const mockUser: User = {
     id: 'test-user-123',
-    email: 'test@example.com',
+    app_metadata: {},
     user_metadata: {
       avatar_url: 'https://avatars.githubusercontent.com/u/12345678',
       full_name: 'Test User',
-    }
-  } as User;
+    },
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+    role: 'authenticated',
+    email: 'test@example.com',
+  };
   
-  // Return values that match the AuthContextType interface
   return {
-    user: mockUser, // Provide a mock user instead of null
+    user: mockUser,
     loading: false,
     showAuthModal: false,
     setShowAuthModal: (_show: boolean, _mode?: 'login' | 'signup') => {}
   };
 };
-
-// For production use
-export default useAuth;
