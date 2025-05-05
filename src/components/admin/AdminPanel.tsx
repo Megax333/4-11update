@@ -1,17 +1,38 @@
-{/* Update the AdminPanel component to include the AdManager */}
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Film, Upload, X, LayoutGrid, Users, Tv, PlaySquare, Youtube } from 'lucide-react';
-import MovieEditor from './MovieEditor';
-import PreviewEditor from './PreviewEditor';
-import EpisodeEditor from './EpisodeEditor';
-import CategoryEditor from './CategoryEditor';
-import CreatorEditor from './CreatorEditor';
-import LiveTVEditor from './LiveTVEditor';
-import AdManager from './AdManager';
-import VideoManager from './VideoManager';
-import FeaturedVideosManager from './FeaturedVideosManager';
-import { useMovieStore } from '../../stores/movieStore';
-import AdminPortal from './AdminPortal';
+import MovieEditor from './MovieEditor.tsx';
+import PreviewEditor from './PreviewEditor.tsx';
+import EpisodeEditor from './EpisodeEditor.tsx';
+import CategoryEditor from './CategoryEditor.tsx';
+import CreatorEditor from './CreatorEditor.tsx';
+import LiveTVEditor from './LiveTVEditor.tsx';
+import AdManager from './AdManager.tsx';
+import VideoManager from './VideoManager.tsx';
+import FeaturedVideosManager from './FeaturedVideosManager.tsx';
+import { useMovieStore } from '../../stores/movieStore.ts';
+import AdminPortal from './AdminPortal.tsx';
+import CarBattleGame from '../gaming/CarBattleGame.tsx';
+
+// Define basic types - expand these based on actual data structure
+interface Movie {
+  id: string | number;
+  title: string;
+  description: string;
+  thumbnail: string;
+  preview: string;
+  tags: string[];
+  order: number;
+}
+
+interface Preview {
+  id: string | number;
+  movieId: string | number;
+}
+
+interface Category {
+  id: string | number;
+  name: string;
+}
 
 const AdminPanel = ({ onClose }: { onClose: () => void }) => {
   const [activeTab, setActiveTab] = useState('movies');
@@ -33,6 +54,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold">Admin Panel</h2>
               <button 
+                type="button"
                 onClick={onClose}
                 className="p-2 hover:bg-white/10 rounded-full transition-colors"
               >
@@ -42,6 +64,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
             <div className="space-y-2">
               <button
                 key="previews-tab"
+                type="button"
                 onClick={() => setActiveTab('previews')}
                 className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
                   activeTab === 'previews' ? 'bg-purple-600' : 'hover:bg-white/5'
@@ -52,6 +75,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </button>
               <button
                 key="movies-tab"
+                type="button"
                 onClick={() => setActiveTab('movies')}
                 className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
                   activeTab === 'movies' ? 'bg-purple-600' : 'hover:bg-white/5'
@@ -62,6 +86,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </button>
               <button
                 key="episodes-tab"
+                type="button"
                 onClick={() => setActiveTab('episodes')}
                 className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
                   activeTab === 'episodes' ? 'bg-purple-600' : 'hover:bg-white/5'
@@ -72,6 +97,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </button>
               <button
                 key="livetv-tab"
+                type="button"
                 onClick={() => setActiveTab('livetv')}
                 className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
                   activeTab === 'livetv' ? 'bg-purple-600' : 'hover:bg-white/5'
@@ -82,6 +108,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </button>
               <button
                 key="ads-tab"
+                type="button"
                 onClick={() => setActiveTab('ads')}
                 className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
                   activeTab === 'ads' ? 'bg-purple-600' : 'hover:bg-white/5'
@@ -92,6 +119,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </button>
               <button
                 key="videos-tab"
+                type="button"
                 onClick={() => setActiveTab('videos')}
                 className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
                   activeTab === 'videos' ? 'bg-purple-600' : 'hover:bg-white/5'
@@ -102,16 +130,18 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </button>
               <button
                 key="categories-tab"
+                type="button"
                 onClick={() => setActiveTab('categories')}
                 className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
                   activeTab === 'categories' ? 'bg-purple-600' : 'hover:bg-white/5'
-                }`}
+                } hover:bg-blue-500 transition-colors`}
               >
                 <LayoutGrid size={20} />
                 <span>Categories</span>
               </button>
               <button
                 key="creators-tab"
+                type="button"
                 onClick={() => setActiveTab('creators')}
                 className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
                   activeTab === 'creators' ? 'bg-purple-600' : 'hover:bg-white/5'
@@ -122,6 +152,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
               </button>
               <button
                 key="settings-tab"
+                type="button"
                 onClick={() => setActiveTab('settings')}
                 className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
                   activeTab === 'settings' ? 'bg-purple-600' : 'hover:bg-white/5'
@@ -141,7 +172,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                   <h2 className="text-2xl font-bold">Preview Management</h2>
                 </div>
                 <div className="grid grid-cols-2 gap-6">
-                  {movies.map((movie) => (
+                  {movies.map((movie: Movie) => (
                     <PreviewEditor key={movie.id} movie={movie} onSave={updateMovie} />
                   ))}
                 </div>
@@ -156,6 +187,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                   </div>
                   <div>
                     <button 
+                      type="button"
                       onClick={() => {
                         addMovie({
                           title: "New Movie",
@@ -175,7 +207,7 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                 </div>
 
                 <div className="grid grid-cols-4 gap-6">
-                  {movies.map((movie, index) => (
+                  {movies.map((movie: Movie, index: number) => (
                     <MovieEditor 
                       key={movie.id} 
                       movie={movie} 
@@ -220,6 +252,12 @@ const AdminPanel = ({ onClose }: { onClose: () => void }) => {
                   <h2 className="text-2xl font-bold">Category Management</h2>
                 </div>
                 <CategoryEditor />
+                
+                {/* Car Battle Game Preview */}
+                <div className="mt-8 border-t border-gray-700 pt-6">
+                  <h3 className="text-xl font-semibold mb-4 text-white">Car Battle Game</h3>
+                  <CarBattleGame />
+                </div>
               </div>
             )}
 

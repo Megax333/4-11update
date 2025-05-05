@@ -5,6 +5,7 @@ import Fundraisers from './Fundraisers';
 import Counseling from './Counseling';
 import PromoStream from './promo/PromoStream';
 import HomePage from './HomePage';
+import CarBattleGame from './gaming/CarBattleGame.tsx';
 import { useCategoryStore } from '../stores/categoryStore';
 
 const ContentGrid = () => {
@@ -29,6 +30,8 @@ const ContentGrid = () => {
         return <Fundraisers />;
       case 'counseling':
         return <Counseling />;
+      case 'gaming':
+        return <CarBattleGame />;
       default:
         return <div className="text-center py-12">Coming Soon</div>;
     }
